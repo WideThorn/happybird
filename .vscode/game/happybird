@@ -1,0 +1,102 @@
+import pygame
+import sys
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Constants
+WIDTH, HEIGHT = 600, 400
+FPS = 30
+GRAVITY = 1
+JUMP_HEIGHT = 15
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+
+# Bird class
+class Bird(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.center = (WIDTH // 4, HEIGHT // 2)
+        self.velocity = 0
+
+    def jump(self):
+        self.velocity = -JUMP_HEIGHT
+
+    def update(self):
+        self.velocity += GRAVITY
+        self.rect.y += self.velocity
+        if self.rect.bottom > HEIGHT:
+            self.rect.bottom = HEIGHT
+
+# Pipe class
+class Pipe(pygame.sprite.Sprite):
+    def __init__(self, height, is_top=True):
+        super().__init__()
+        self.image = pygame.Surface((50, height))
+        self.image.fill(WHITE)
+        self.rect = self.image.get_rect()
+        if is_top:
+            self.rect.topleft = (WIDTH, 0)
+        else:
+            self.rect.bottomleft = (WIDTH, HEIGHT)
+
+    def update(self):
+        self.rect.x -= 5
+        if self.rect.right < 0:
+            self.kill()
+
+# Set up the game window
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Happy Bird")
+clock = pygame.time.Clock()
+
+# Create sprites
+all_sprites = pygame.sprite.Group()
+pipes = pygame.sprite.Group()
+bird = Bird()
+all_sprites.add(bird)
+
+# Game loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            bird.jump()
+
+    # Spawn pipes
+    if random.randint(1, 60) == 1:
+        pipe_height = random.randint(50, HEIGHT - 50)
+        pipes.add(Pipe(pipe_height))
+        pipes.add(Pipe(HEIGHT - pipe_height, False))
+
+    # Update sprites
+    all_sprites.update()
+    pipes.update()
+
+    # Check for collisions
+    if pygame.sprite.spritecollide(bird, pipes, False):
+        running = False
+
+    # Draw everything
+    screen.fill(BLACK)
+    all_sprites.draw(screen)
+    pipes.draw(screen)
+
+    # Update the display
+    pygame.display.flip()
+
+    # Cap the frame rate
+    clock.tick(FPS)
+
+# Quit the game
+pygame.quit()
+sys.exit()
